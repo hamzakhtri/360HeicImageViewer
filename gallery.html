@@ -50,6 +50,7 @@
     </a-scene>
 
     <script>
+
         window.addEventListener('DOMContentLoaded', () => {
             const images = [
                 '/images/img1.HEIC',
@@ -94,15 +95,28 @@
                 btn.addEventListener('click', async () => {
                     btn.disabled = true;
                     btn.innerText = 'Loading…';
+                    console.log(`🟡 Trying to load image: ${src}`);
 
                     try {
                         const res = await fetch(src);
                         if (!res.ok) throw new Error(`HTTP ${res.status}`);
                         const blob = await res.blob();
+                        console.log('✅ Fetched Blob:', blob);
 
                         let finalBlob = blob;
-                        if (src.toLowerCase().endsWith('.HEIC')) {
+
+                        // ✅ Match lowercase .heic extension
+                        if (src.toLowerCase().endsWith('.heic')) {
+                            console.log('🔄 Converting HEIC to JPEG using heic2any...');
                             finalBlob = await heic2any({ blob, toType: 'image/jpeg' });
+
+                            // heic2any may return an array (for multi-frame images)
+                            if (Array.isArray(finalBlob)) {
+                                finalBlob = finalBlob[0];
+                                console.log('ℹ️ HEIC had multiple frames. Using first one.');
+                            }
+
+                            console.log('✅ Converted Blob:', finalBlob);
                         }
 
                         const dataUrl = await new Promise((resolve, reject) => {
@@ -111,6 +125,8 @@
                             reader.onerror = () => reject(reader.error);
                             reader.readAsDataURL(finalBlob);
                         });
+
+                        console.log('🖼️ Data URL (preview):', dataUrl.slice(0, 100));
 
                         // Set image on sky and show scene
                         sky.setAttribute('src', dataUrl);
@@ -121,6 +137,7 @@
                         const mesh = sky.getObject3D('mesh');
                         if (mesh && mesh.material && mesh.material.map) {
                             mesh.material.map.needsUpdate = true;
+                            console.log('🔁 Forced texture update');
                         }
 
                         // Wait and trigger VR mode automatically
@@ -128,12 +145,14 @@
                             const afBtn = document.querySelector('.a-enter-vr-button');
                             if (afBtn) {
                                 afBtn.click();
+                                console.log('🚀 Entered VR mode');
                             } else {
                                 setTimeout(triggerEnterVR, 100);
                             }
                         })();
 
                     } catch (err) {
+                        console.error('❌ Error loading VR image:', err);
                         const errDiv = document.createElement('div');
                         errDiv.className = 'text-danger m-3';
                         errDiv.textContent = `Error loading VR image: ${err.message}`;
@@ -149,6 +168,7 @@
                 if (!document.fullscreenElement) {
                     document.body.classList.remove('vr-active');
                     vrScene.style.display = 'none';
+                    console.log('📤 Exited fullscreen VR');
                 }
             });
         });
