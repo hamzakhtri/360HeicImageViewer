@@ -52,9 +52,9 @@
     <script>
         window.addEventListener('DOMContentLoaded', () => {
             const images = [
-                '/images/img1.heic',
-                '/images/img2.heic',
-                '/images/img3.heic'
+                '/images/img1.HEIC',
+                '/images/img2.HEIC',
+                '/images/img3.HEIC'
             ];
             const previews = [
                 '/images/img1_preview.jpeg',
@@ -101,7 +101,7 @@
                         const blob = await res.blob();
 
                         let finalBlob = blob;
-                        if (src.toLowerCase().endsWith('.heic')) {
+                        if (src.toLowerCase().endsWith('.HEIC')) {
                             finalBlob = await heic2any({ blob, toType: 'image/jpeg' });
                         }
 
