@@ -79,3 +79,7 @@ body.vr-active #vrScene {
     height: 100vh !important;
     z-index: 9999;
 }
+
+.btn {
+    background: #00264d;
+}
