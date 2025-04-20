@@ -51,7 +51,7 @@
 
     <script>
         window.addEventListener('DOMContentLoaded', () => {
-            const IMAGES = ['images/img1.heic', 'images/img2.heic', 'images/img3.heic'];
+            const IMAGES = ['images/img1.HEIC', 'images/img2.HEIC', 'images/img3.HEIC'];
             const PREVIEWS = ['images/img1_preview.jpeg', 'images/img2_preview.jpeg', 'images/img3_preview.jpeg'];
 
             const galleryEl = document.getElementById('galleryContainer');
@@ -115,7 +115,7 @@
                         let blob = await res.blob();
                         console.log('[Gallery] got blob:', blob);
 
-                        if (relSrc.toLowerCase().endsWith('.heic')) {
+                        if (relSrc.toLowerCase().endsWith('.HEIC')) {
                             console.log('[Gallery] converting HEIC → JPEG');
                             blob = await heic2any({ blob, toType: 'image/jpeg' });
                             console.log('[Gallery] conversion complete:', blob);
