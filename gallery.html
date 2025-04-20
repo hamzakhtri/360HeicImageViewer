@@ -50,7 +50,6 @@
     </a-scene>
 
     <script>
-
         window.addEventListener('DOMContentLoaded', () => {
             const images = [
                 '/images/img1.HEIC',
@@ -105,12 +104,10 @@
 
                         let finalBlob = blob;
 
-                        // ✅ Match lowercase .heic extension
                         if (src.toLowerCase().endsWith('.heic')) {
                             console.log('🔄 Converting HEIC to JPEG using heic2any...');
                             finalBlob = await heic2any({ blob, toType: 'image/jpeg' });
 
-                            // heic2any may return an array (for multi-frame images)
                             if (Array.isArray(finalBlob)) {
                                 finalBlob = finalBlob[0];
                                 console.log('ℹ️ HEIC had multiple frames. Using first one.');
@@ -128,28 +125,24 @@
 
                         console.log('🖼️ Data URL (preview):', dataUrl.slice(0, 100));
 
-                        // Set image on sky and show scene
+                        // Set image on sky
                         sky.setAttribute('src', dataUrl);
-                        vrScene.style.display = 'block';
-                        document.body.classList.add('vr-active');
 
-                        // Force texture update
-                        const mesh = sky.getObject3D('mesh');
-                        if (mesh && mesh.material && mesh.material.map) {
-                            mesh.material.map.needsUpdate = true;
-                            console.log('🔁 Forced texture update');
-                        }
+                        // Wait for texture load before showing VR scene
+                        sky.addEventListener('materialtextureloaded', function showVRScene() {
+                            console.log('🎯 Texture loaded. Showing scene.');
+                            vrScene.style.display = 'block';
+                            document.body.classList.add('vr-active');
 
-                        // Wait and trigger VR mode automatically
-                        (function triggerEnterVR() {
-                            const afBtn = document.querySelector('.a-enter-vr-button');
-                            if (afBtn) {
-                                afBtn.click();
-                                console.log('🚀 Entered VR mode');
-                            } else {
-                                setTimeout(triggerEnterVR, 100);
+                            // 🔥 Force A-Frame to re-render canvas
+                            if (AFRAME && AFRAME.scenes && AFRAME.scenes[0]) {
+                                AFRAME.scenes[0].resize();
+                                console.log('🔁 Forced A-Frame resize to fix blank screen issue');
                             }
-                        })();
+
+                            sky.removeEventListener('materialtextureloaded', showVRScene);
+                        });
+
 
                     } catch (err) {
                         console.error('❌ Error loading VR image:', err);
@@ -173,6 +166,7 @@
             });
         });
     </script>
+
 </body>
 
 </html>
