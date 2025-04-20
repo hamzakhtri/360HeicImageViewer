@@ -158,12 +158,30 @@
             });
 
             document.addEventListener('fullscreenchange', () => {
-                if (!document.fullscreenElement) {
+                const isInFullscreen = document.fullscreenElement !== null;
+                if (!isInFullscreen) {
+                    console.log('📤 Exited fullscreen VR');
                     document.body.classList.remove('vr-active');
                     vrScene.style.display = 'none';
-                    console.log('📤 Exited fullscreen VR');
+
+                    // ✅ Optional: Reset sky texture
+                    sky.removeAttribute('src');
+
+                    // ✅ Re-show gallery container
+                    const galleryContainer = document.getElementById('galleryContainer');
+                    if (galleryContainer) {
+                        galleryContainer.style.display = 'flex';
+                        console.log('📸 Re-showing gallery after VR exit');
+                    }
+
+                    // ✅ Force A-Frame resize again just in case
+                    if (AFRAME && AFRAME.scenes && AFRAME.scenes[0]) {
+                        AFRAME.scenes[0].resize();
+                        console.log('🔁 A-Frame resized after exiting VR');
+                    }
                 }
             });
+
         });
     </script>
 
