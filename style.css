@@ -1,0 +1,81 @@
+body {
+    font-family: 'Segoe UI', sans-serif;
+    background: #f7f9fc;
+    margin: 0;
+    padding: 0;
+}
+
+header {
+    background: #00264d;
+    padding: 10px 20px;
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+header .logo {
+    font-size: 24px;
+    font-weight: bold;
+}
+
+header nav a {
+    color: white;
+    margin-left: 20px;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.container {
+    padding: 30px;
+}
+
+.upload-box {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    border: 2px dashed #ccc;
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.preview-box {
+    border: 1px solid #ccc;
+    padding: 10px;
+    border-radius: 8px;
+    max-width: 100%;
+    margin-top: 20px;
+    text-align: center;
+    background: white;
+}
+
+#image2D {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 10px auto;
+}
+
+.vr-btn {
+    margin-top: 10px;
+}
+
+
+/* at the bottom of style.css */
+
+/* When body.vr-active is set, hide the header and uploader */
+body.vr-active header,
+body.vr-active .container {
+    display: none !important;
+}
+
+/* Make the A‑Frame scene fill the viewport when vr-active */
+body.vr-active #vrScene {
+    display: block !important;
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    width: 100vw !important;
+    height: 100vh !important;
+    z-index: 9999;
+}
