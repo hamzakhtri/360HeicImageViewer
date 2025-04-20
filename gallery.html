@@ -51,113 +51,93 @@
 
     <script>
         window.addEventListener('DOMContentLoaded', () => {
-            const IMAGES = ['images/img1.HEIC', 'images/img2.HEIC', 'images/img3.HEIC'];
-            const PREVIEWS = ['images/img1_preview.jpeg', 'images/img2_preview.jpeg', 'images/img3_preview.jpeg'];
+            const images = [
+                '/images/img1.heic',
+                '/images/img2.heic',
+                '/images/img3.heic'
+            ];
+            const previews = [
+                '/images/img1_preview.jpeg',
+                '/images/img2_preview.jpeg',
+                '/images/img3_preview.jpeg'
+            ];
 
-            const galleryEl = document.getElementById('galleryContainer');
-            const loaderEl = document.getElementById('loadingOverlay');
-            const vrSceneEl = document.getElementById('vrScene');
-            const skyEl = document.getElementById('sky');
-            const panoramaEl = document.getElementById('panorama');  // A-Frame asset
+            const gallery = document.getElementById('galleryContainer');
+            const loader = document.getElementById('loadingOverlay');
+            const vrScene = document.getElementById('vrScene');
+            const sky = document.getElementById('sky');
 
-            // Helper: resolve relative paths against the page URL
-            const toUrl = (path) => new URL(path, window.location.href).href;
+            if (images.length) loader.style.display = 'block';
 
-            console.log('[Gallery] initializing with', IMAGES.length, 'images');
-            loaderEl.style.display = 'block';
-
-            IMAGES.forEach((relSrc, idx) => {
-                const srcUrl = toUrl(relSrc);
-                const previewUrl = toUrl(PREVIEWS[idx]);
-
-                // Build card
+            images.forEach((src, i) => {
                 const col = document.createElement('div');
-                const card = document.createElement('div');
-                const img = document.createElement('img');
-                const btn = document.createElement('button');
-                const err = document.createElement('div');
-
                 col.className = 'col-md-4 mb-4';
+                const card = document.createElement('div');
                 card.className = 'card';
+
+                const img = document.createElement('img');
                 img.className = 'card-img-top';
-                btn.className = 'btn btn-primary m-3';
-                err.className = 'text-danger m-3';
-
-                img.src = previewUrl;
+                img.src = previews[i] || '';
                 img.alt = 'Preview image';
-                img.onerror = () => {
-                    img.alt = 'Preview failed';
-                    console.warn(`[Gallery] preview ${previewUrl} failed to load`);
-                };
+                img.onerror = () => img.alt = 'Preview failed';
 
+                const btn = document.createElement('button');
+                btn.className = 'btn btn-primary m-3';
                 btn.innerText = 'Open in VR';
-                card.append(img, btn, err);
-                col.appendChild(card);
-                galleryEl.appendChild(col);
 
-                if (idx === IMAGES.length - 1) {
-                    loaderEl.style.display = 'none';
-                    console.log('[Gallery] all cards appended, hiding loader');
-                }
+                card.append(img, btn);
+                col.appendChild(card);
+                gallery.appendChild(col);
+
+                loader.style.display = 'none';
 
                 btn.addEventListener('click', async () => {
-                    console.log(`[Gallery] click on ${relSrc}`);
-                    err.textContent = '';
                     btn.disabled = true;
                     btn.innerText = 'Loading…';
 
                     try {
-                        console.log(`[Gallery] fetching ${srcUrl}`);
-                        const res = await fetch(srcUrl);
-                        console.log(`[Gallery] fetch response:`, res.status);
+                        const res = await fetch(src);
                         if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                        const blob = await res.blob();
 
-                        let blob = await res.blob();
-                        console.log('[Gallery] got blob:', blob);
-
-                        if (relSrc.toLowerCase().endsWith('.HEIC')) {
-                            console.log('[Gallery] converting HEIC → JPEG');
-                            blob = await heic2any({ blob, toType: 'image/jpeg' });
-                            console.log('[Gallery] conversion complete:', blob);
+                        let finalBlob = blob;
+                        if (src.toLowerCase().endsWith('.heic')) {
+                            finalBlob = await heic2any({ blob, toType: 'image/jpeg' });
                         }
 
                         const dataUrl = await new Promise((resolve, reject) => {
                             const reader = new FileReader();
                             reader.onload = () => resolve(reader.result);
                             reader.onerror = () => reject(reader.error);
-                            reader.readAsDataURL(blob);
+                            reader.readAsDataURL(finalBlob);
                         });
-                        console.log('[Gallery] Data URL ready (length):', dataUrl.length);
 
-                        // Proper A-Frame asset update:
-                        panoramaEl.setAttribute('src', dataUrl);
-                        skyEl.setAttribute('src', '#panorama');
-
-                        vrSceneEl.style.display = 'block';
+                        // Set image on sky and show scene
+                        sky.setAttribute('src', dataUrl);
+                        vrScene.style.display = 'block';
                         document.body.classList.add('vr-active');
-                        console.log('[Gallery] VR scene displayed');
 
-                        // Ensure the texture actually updates
-                        const mesh = skyEl.getObject3D('mesh');
-                        if (mesh?.material?.map) {
+                        // Force texture update
+                        const mesh = sky.getObject3D('mesh');
+                        if (mesh && mesh.material && mesh.material.map) {
                             mesh.material.map.needsUpdate = true;
-                            console.log('[Gallery] forced material.update');
                         }
 
-                        // Auto-trigger VR button
-                        (function triggerVR() {
-                            const vrBtn = document.querySelector('.a-enter-vr-button');
-                            if (vrBtn) {
-                                console.log('[Gallery] clicking A-Frame VR button');
-                                vrBtn.click();
+                        // Wait and trigger VR mode automatically
+                        (function triggerEnterVR() {
+                            const afBtn = document.querySelector('.a-enter-vr-button');
+                            if (afBtn) {
+                                afBtn.click();
                             } else {
-                                window.requestAnimationFrame(triggerVR);
+                                setTimeout(triggerEnterVR, 100);
                             }
                         })();
 
-                    } catch (fetchErr) {
-                        console.error('[Gallery] error:', fetchErr);
-                        err.textContent = `Error: ${fetchErr.message}`;
+                    } catch (err) {
+                        const errDiv = document.createElement('div');
+                        errDiv.className = 'text-danger m-3';
+                        errDiv.textContent = `Error loading VR image: ${err.message}`;
+                        card.appendChild(errDiv);
                     } finally {
                         btn.disabled = false;
                         btn.innerText = 'Open in VR';
@@ -165,16 +145,13 @@
                 });
             });
 
-            // Cleanup when exiting fullscreen/VR
             document.addEventListener('fullscreenchange', () => {
                 if (!document.fullscreenElement) {
                     document.body.classList.remove('vr-active');
-                    vrSceneEl.style.display = 'none';
-                    console.log('[Gallery] VR scene hidden (fullscreen exit)');
+                    vrScene.style.display = 'none';
                 }
             });
         });
-
     </script>
 </body>
 
